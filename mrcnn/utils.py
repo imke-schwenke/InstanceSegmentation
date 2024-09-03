@@ -199,9 +199,6 @@ def box_refinement_graph(box, gt_box):
 
     dy = (gt_center_y - center_y) / height
     dx = (gt_center_x - center_x) / width
-    # ÄNDERUNG
-    # dh = tf.log(gt_height / height)
-    # dw = tf.log(gt_width / width)
     dh = tf.math.log(gt_height / height)
     dw = tf.math.log(gt_width / width)
 
@@ -359,7 +356,12 @@ class Dataset(object):
         """Load the specified image and return a [H,W,3] Numpy array.
         """
         # Load image
-        image = skimage.io.imread(self.image_info[image_id]['path'])
+        # image = skimage.io.imread(self.image_info[image_id]['path'])
+        # Suche das Dictionary, wo der 'id'-Wert mit 'image_id' übereinstimmt
+        image_info = next(item for item in self.image_info if item['id'] == image_id)
+
+        # Lade das Bild anhand des Pfads
+        image = skimage.io.imread(image_info['path'])
         # If grayscale. Convert to RGB for consistency.
         if image.ndim != 3:
             image = skimage.color.gray2rgb(image)
@@ -532,8 +534,8 @@ def minimize_mask(bbox, mask, mini_shape):
         if m.size == 0:
             raise Exception("Invalid bounding box with area of zero")
         # Resize with bilinear interpolation
-        m = resize(m, mini_shape)
-        mini_mask[:, :, i] = np.around(m).astype(np.bool)
+        m = resize(m.astype(float), mini_shape)
+        mini_mask[:, :, i] = np.around(m).astype(np.bool_)
     return mini_mask
 
 
@@ -550,8 +552,8 @@ def expand_mask(bbox, mini_mask, image_shape):
         h = y2 - y1
         w = x2 - x1
         # Resize with bilinear interpolation
-        m = resize(m, (h, w))
-        mask[y1:y2, x1:x2, i] = np.around(m).astype(np.bool)
+        m = resize(m.astype(float), (h, w))
+        mask[y1:y2, x1:x2, i] = np.around(m).astype(np.bool_)
     return mask
 
 
