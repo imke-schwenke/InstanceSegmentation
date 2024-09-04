@@ -1434,24 +1434,48 @@ def build_detection_targets(rpn_rois, gt_class_ids, gt_boxes, gt_masks, config):
         gt_id = roi_gt_assignment[i]
         class_mask = gt_masks[:, :, gt_id]
 
+        # if config.USE_MINI_MASK:
+        #     # Create a mask placeholder, the size of the image
+        #     placeholder = np.zeros(config.IMAGE_SHAPE[:2], dtype=bool)
+        #     # GT box
+        #     gt_y1, gt_x1, gt_y2, gt_x2 = gt_boxes[gt_id]
+        #     gt_w = gt_x2 - gt_x1
+        #     gt_h = gt_y2 - gt_y1
+        #     # Resize mini mask to size of GT box
+        #     placeholder[gt_y1:gt_y2, gt_x1:gt_x2] = \
+        #         np.round(utils.resize(class_mask, (gt_h, gt_w))).astype(bool)
+        #     # Place the mini batch in the placeholder
+        #     class_mask = placeholder
+
         if config.USE_MINI_MASK:
             # Create a mask placeholder, the size of the image
             placeholder = np.zeros(config.IMAGE_SHAPE[:2], dtype=bool)
+            
             # GT box
             gt_y1, gt_x1, gt_y2, gt_x2 = gt_boxes[gt_id]
             gt_w = gt_x2 - gt_x1
             gt_h = gt_y2 - gt_y1
+            
             # Resize mini mask to size of GT box
-            placeholder[gt_y1:gt_y2, gt_x1:gt_x2] = \
-                np.round(utils.resize(class_mask, (gt_h, gt_w))).astype(bool)
+            # Convert to uint8 before resizing to avoid issues with interpolation
+            resized_mask = utils.resize(class_mask.astype(np.uint8), (gt_h, gt_w))
+            
+            # Convert back to boolean after resizing
+            placeholder[gt_y1:gt_y2, gt_x1:gt_x2] = np.round(resized_mask).astype(bool)
+            
             # Place the mini batch in the placeholder
             class_mask = placeholder
 
         # Pick part of the mask and resize it
         y1, x1, y2, x2 = rois[i].astype(np.int32)
         m = class_mask[y1:y2, x1:x2]
-        mask = utils.resize(m, config.MASK_SHAPE)
-        masks[i, :, :, class_id] = mask
+        # mask = utils.resize(m, config.MASK_SHAPE)
+        # masks[i, :, :, class_id] = mask
+        # Convert the cropped mask to float32 before resizing
+        m_resized = utils.resize(m.astype(np.float32), config.MASK_SHAPE, order=1)
+
+        # Convert back to boolean after resizing and assign to the mask array
+        masks[i, :, :, class_id] = np.round(m_resized).astype(bool)
 
     return rois, roi_gt_class_ids, bboxes, masks
 
