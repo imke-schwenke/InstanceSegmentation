@@ -6,11 +6,12 @@ import numpy as np
 import skimage.draw
 
 # root directory of the project
-ROOT_DIR = '/content/gdrive/MyDrive'
+#ROOT_DIR = '/content/gdrive/MyDrive'
+ROOT_DIR = './'
 
 # import mask rcnn
 sys.path.append(ROOT_DIR)
-from mrcnn.config import Config 
+from mrcnn.config import Config
 from mrcnn import utils
 import mrcnn.model as modellib
 
