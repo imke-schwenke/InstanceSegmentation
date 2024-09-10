@@ -35,22 +35,16 @@ class CElegansConfig(Config):
 ############################################################  
 
 class CElegansDataset(utils.Dataset):
-    
+
     def load_c_elegans(self, dataset_dir, subset):
         """Load a subset of the C. elegans dataset."""
         self.add_class("c_elegans", 1, "c_elegans")
-
-        # Define the path for train or validation data
-        assert subset in ["train", "val"]
         dataset_dir = os.path.join(dataset_dir, subset)
 
         # Load annotations
         annotations_file = json.load(open(os.path.join(dataset_dir, "annotations.json")))
         images = annotations_file['images']
-        #annotations = annotations_file['annotations']
 
-        # Add images
-        #for image_info in annotations['images']:
         for image_info in images:
             image_id = image_info['id']
             file_name = image_info['file_name']
@@ -70,6 +64,7 @@ class CElegansDataset(utils.Dataset):
                 width=width, height=height,
                 annotations=filtered_annotations
             )
+    
 
     def load_mask(self, image_id):
         """Generate instance masks for an image."""
