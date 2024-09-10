@@ -29,6 +29,7 @@ class CElegansConfig(Config):
     NUM_CLASSES = 1 + 1  # Background + worm
     STEPS_PER_EPOCH = 100
     DETECTION_MIN_CONFIDENCE = 0.9
+    BACKBONE_STAGE5 = False
 
 ############################################################
 #  Dataset
@@ -62,6 +63,12 @@ class CElegansDataset(utils.Dataset):
                 annotation for annotation in annotations_file['annotations']
                 if annotation['image_id'] == image_id
             ]
+            # Überprüfe die Bounding Boxes in den gefilterten Annotationen
+            for annotation in filtered_annotations:
+                bbox = annotation['bbox']  # Angenommen, 'bbox' enthält die Bounding Box [x, y, width, height]
+                x, y, bbox_width, bbox_height = bbox
+                if x < 0 or y < 0 or (x + bbox_width) > width or (y + bbox_height) > height:
+                    print(f"Invalid bbox in image {image_id}: {bbox}")
 
             self.add_image(
                 "c_elegans",
